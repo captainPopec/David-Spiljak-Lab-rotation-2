@@ -1,0 +1,25 @@
+# Environment for the WSI / SpatialData / LazySlide notebooks
+# (notebooks/01_spatialdata_load.ipynb, notebooks/02_lazyslide.ipynb).
+#
+# This is an unpinned starter stub — pin versions once the WSI workflow stabilises.
+# It deliberately does NOT include cellina/cpa: those stacks (see envs/cellina.yml,
+# envs/cpa_env.yml) have conflicting pins, so keep image analysis in a separate env.
+name: wsi
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - pip
+  - jupyterlab
+  - ipykernel
+  - numpy
+  - pandas
+  - scipy
+  - pip:
+      - scanpy
+      - anndata
+      - spatialdata
+      - spatialdata-io
+      - lazyslide
+      - wsidata

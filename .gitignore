@@ -78,6 +78,11 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# wsi_cellina notebook/training runtime caches
+notebooks/preds/
+cpa_model/
+scvi_log/
+
 # IPython
 profile_default/
 ipython_config.py
