@@ -1,9 +1,18 @@
 # Environment for the WSI / SpatialData / LazySlide notebooks
-# (notebooks/01_spatialdata_load.ipynb, notebooks/02_lazyslide.ipynb).
+# (notebooks/01_spatialdata_load.ipynb, 02_lazyslide.ipynb, 04_explore_datasets.ipynb)
+# and the dataset builders in scripts/preprocess/.
 #
-# This is an unpinned starter stub — pin versions once the WSI workflow stabilises.
-# It deliberately does NOT include cellina/cpa: those stacks (see envs/cellina.yml,
-# envs/cpa_env.yml) have conflicting pins, so keep image analysis in a separate env.
+# Unpinned starter — pin versions once the WSI workflow stabilises. Deliberately does NOT
+# include cellina/cpa: those stacks (envs/cellina.yml, envs/cpa_env.yml) have conflicting
+# pins, so keep image analysis in a separate env.
+#
+# libstdc++ note: pip `scipy`/`lazyslide` need CXXABI_1.3.15, absent from some system
+# libstdc++. We pull a recent one via conda (libstdcxx-ng/libgcc-ng below) and expose it on
+# the loader path. After `mamba env create -f envs/wsi.yml`, run once:
+#     conda env config vars set -n wsi LD_LIBRARY_PATH=$CONDA_PREFIX/lib
+# so `conda activate wsi` (and the Jupyter kernel) find it. For direct calls, prefix:
+#     LD_LIBRARY_PATH=$CONDA_PREFIX/lib python ...
+# Register the kernel with: python -m ipykernel install --user --name wsi --display-name wsi
 name: wsi
 channels:
   - conda-forge
@@ -16,10 +25,20 @@ dependencies:
   - numpy
   - pandas
   - scipy
+  - libstdcxx-ng>=13   # provides CXXABI_1.3.15 for pip scipy/lazyslide
+  - libgcc-ng>=13
   - pip:
       - scanpy
       - anndata
       - spatialdata
       - spatialdata-io
+      - spatialdata-plot   # spatial annotation plots (.pl accessor)
       - lazyslide
       - wsidata
+      - geopandas          # QuPath geojson region polygons
+      - tifffile
+      - imagecodecs        # read OME-TIFF / BigTIFF H&E
+      - zarr
+      - dask
+      - leidenalg          # scanpy Leiden clustering
+      - igraph
