@@ -18,11 +18,18 @@ download step (bundle/, he_image.ome.tif, he_imagealignment.csv, celltypes_ovca.
 region_annotations_ovca.csv). See notebooks/datasets/DATASETS.md for provenance.
 """
 import os
+import anndata
 import pandas as pd
 
 import spatialdata as sd  # noqa: F401
 import spatialdata_io
 from spatialdata.transformations import get_transformation
+
+# cells.parquet is read via pyarrow, so obs cell_id/index can arrive as an Arrow-backed string
+# array; anndata refuses to write those unless this opt-in is set. Same-version read-back is fine.
+anndata.settings.allow_write_nullable_strings = True
+
+from xenium_zarr_compat import ensure_flat_files  # materialises flat files for XOA-3.0 bundles
 
 # --- paths (repo-relative so the script is location-independent) ---
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -48,11 +55,25 @@ def main():
     xen_root = find_xenium_root(BUNDLE)
     print("Xenium root:", xen_root, flush=True)
 
+    # XOA-3.0+ bundles ship outputs only as *.zarr.zip and lack the flat cell_feature_matrix.h5 /
+    # cells.parquet that spatialdata_io still reads. Materialise them from the zarr (idempotent).
+    ensure_flat_files(xen_root)
+
+    # Boundary polygons come from cell_boundaries.parquet / nucleus_boundaries.parquet, which the
+    # zarr-packed bundle also omits (cells.zarr.zip carries polygons but the reader wants parquet).
+    # Build without boundary shapes when they are absent; the cell_labels raster (from
+    # cells.zarr.zip) is still produced and is what the notebook renders.
+    have_cb = os.path.exists(os.path.join(xen_root, "cell_boundaries.parquet"))
+    have_nb = os.path.exists(os.path.join(xen_root, "nucleus_boundaries.parquet"))
+    if not (have_cb and have_nb):
+        print("NOTE: boundary parquets absent (XOA-3.0 zarr bundle) -> building without "
+              "cell/nucleus boundary shapes.", flush=True)
+
     print("=== Reading Xenium bundle (transcripts EXCLUDED) ===", flush=True)
     sdata = spatialdata_io.xenium(
         xen_root,
-        cells_boundaries=True,
-        nucleus_boundaries=True,
+        cells_boundaries=have_cb,
+        nucleus_boundaries=have_nb,
         cells_as_circles=False,
         cells_labels=True,
         nucleus_labels=True,
@@ -141,6 +162,18 @@ def main():
             pts = PointsModel.parse(pdf, coordinates={"x": "x", "y": "y"}, feature_key="domain")
             sdata.points["domain_points"] = pts
             print("Added domain_points from obs centroids (cols %s,%s)" % (xcol, ycol), flush=True)
+        elif "spatial" in table.obsm:
+            # spatialdata_io moves centroids to obsm['spatial'] and drops the x/y_centroid columns
+            sp = table.obsm["spatial"]
+            pdf = pd.DataFrame({
+                "x": pd.Series(sp[:, 0]).astype(float),
+                "y": pd.Series(sp[:, 1]).astype(float),
+                "domain": obs["domain"].astype(str).values,
+                "cell_type": obs["cell_type"].astype(str).values,
+            })
+            pts = PointsModel.parse(pdf, coordinates={"x": "x", "y": "y"}, feature_key="domain")
+            sdata.points["domain_points"] = pts
+            print("Added domain_points from table.obsm['spatial']", flush=True)
         else:
             cs_name = next((s for s in sdata.shapes if "cell" in s and "nucle" not in s), list(sdata.shapes)[0])
             shp = sdata.shapes[cs_name]
