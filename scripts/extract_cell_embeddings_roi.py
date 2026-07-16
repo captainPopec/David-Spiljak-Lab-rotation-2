@@ -120,6 +120,18 @@ rng = np.random.default_rng(RNG_SEED)
 checkpoint(f"Loading spatialdata zarr: {SDATA_PATH}")
 sdata = sd.read_zarr(SDATA_PATH)
 table = sdata.tables["table"]
+
+# wsidata's SpatialDataImage2DReader.get_region() does `img.sel(...).data.compute()` on EVERY
+# tile read, with no caching between calls -- even cells a few px apart (same zarr chunk) each
+# independently re-fetch/decompress that chunk from disk. Over thousands of scattered per-cell
+# tiles this reads far more off disk than the tile pixels need (measured: ~640GB read for one
+# ~17k-tile run, vs. ~9GB of actual tile pixels). The image is only ~4GB -- .persist() forces it
+# fully into RAM ONCE, still as a dask-backed array (so wsidata's .compute() calls keep working),
+# so every subsequent per-tile read becomes a free in-memory slice instead of a disk hit.
+checkpoint("Persisting he image into memory (one-time ~4GB) to eliminate per-tile disk re-reads...")
+sdata.images[IMAGE_KEY] = sdata.images[IMAGE_KEY].persist()
+checkpoint("Persisted.")
+
 wsi = open_wsi(sdata, image_key=IMAGE_KEY)
 wsi.set_mpp(HE_MPP)
 checkpoint(f"Loaded OVCA: {table.n_obs} cells, H&E mpp={HE_MPP}")
