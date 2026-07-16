@@ -75,9 +75,11 @@ import lazyslide as zs
 
 # --- config ---------------------------------------------------------------------
 RNG_SEED = 0
-# UNI2 dropped for this run to save time after the he-image chunking fix -- run it separately
-# later (MODEL_KEYS = ["uni2"]) rather than block this run on both models.
-MODEL_KEYS = ["virchow2"]
+# Second pass: virchow2 already extracted (backed up at data/ovca_roi_embeddings_virchow2_backup/
+# before this run, since this script overwrites its output h5ad rather than merging into it).
+# UNI2 now, with the .persist() fix validated by the 3% test run (extract_cell_embeddings_roi_
+# test3pct.py) -- ~31ms/tile including inference, vs. ~140ms/tile pre-fix.
+MODEL_KEYS = ["uni2"]
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SDATA_PATH = REPO_ROOT / "notebooks" / "datasets" / "OVCA.zarr"
