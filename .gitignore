@@ -1,3 +1,6 @@
+# Script outputs (embeddings, ROI definitions, plots -- not tracked)
+data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -80,6 +83,9 @@ target/
 
 # wsi_cellina notebook/training runtime caches
 notebooks/preds/
+notebooks/preds_ovca_embed/
+# symlink -> /scratch/spiljak/wsi_ood_preds/ (predictions are ~1.4 GB; /g/stegle has <10 GB free)
+notebooks/preds_ovca_labels_vs_embed
 cpa_model/
 scvi_log/
 

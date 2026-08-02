@@ -8,6 +8,7 @@ what is meant to live here.
 
 __version__ = "0.0.1"
 
+from wsi.embeddings_baseline import EmbeddingsBaseline
 from wsi.labels_baseline import LabelsBaseline
 
-__all__ = ["LabelsBaseline"]
+__all__ = ["EmbeddingsBaseline", "LabelsBaseline"]
