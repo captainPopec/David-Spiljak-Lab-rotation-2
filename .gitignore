@@ -227,3 +227,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+notebooks/datasets/
+notebooks/figures/
+scripts/logs/
+scripts/babysit_slurm.sh
