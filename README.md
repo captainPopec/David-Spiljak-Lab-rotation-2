@@ -1,7 +1,6 @@
 # Pathology foundation model embeddings as a microenvironment representation for counterfactual gene expression prediction
 
 
-📄 **Full report:** [Rotation_report_spiljak.pdf](Rotation_report_spiljak.pdf) is the detailed scientific report of this project, with the full background, methods, results and discussion.
 
 ## Repository layout
 
